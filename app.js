@@ -42,7 +42,6 @@ app.config(function ($stateProvider, $urlRouterProvider) {
 					return quizService.getQuestions(name);
 				}
 			},
-
 		})
 		.state('quiz.view', {
 			parent: 'quiz',

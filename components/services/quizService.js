@@ -1,8 +1,8 @@
 var app = angular.module('quizApp');
 
 app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {
-	
-	var firebaseUrl = '<your firebase url>'
+
+	var firebaseUrl = 'https://quiz-sample.firebaseIO.com'
 
 	var quizzes = new Firebase(firebaseUrl + '/quizzes');
 	var quizzesObj = $firebaseObject(quizzes);
@@ -47,11 +47,11 @@ app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {
 
 		return dfd.promise;
 	}
-	
+
 	this.getAnswers = function (quizName, quiz) {
 		console.log(quizName, quiz)
 		var dfd = $q.defer();
-		
+
 		var quizAnswersRef = new Firebase(firebaseUrl + '/answers/' + quizName + '/' + quiz);
 		var quizAnswers = $firebaseObject(quizAnswersRef)
 		quizAnswers.$loaded()
@@ -64,7 +64,7 @@ app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {
 			.catch(function (err) {
 				dfd.reject(err);
 			})
-		
+
 		return dfd.promise;
 	}
 
@@ -85,7 +85,7 @@ app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {
 		var myAnswers = new Firebase(firebaseUrl + '/answers/' + quiz + '/' + quizDate + '/answers');
 		if (quizName) {
 			myAnswers.parent().set({name: quizName})
-		} 
+		}
 		myAnswers.set(answers);
 		dfd.resolve('answers saved');
 
