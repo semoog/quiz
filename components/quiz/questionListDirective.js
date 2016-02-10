@@ -19,7 +19,7 @@ app.directive('questionList', function () {
 
 			// $scope.currentQuestion = $scope.questions[0];
 
-			$scope.setQuestion = function (question) {
+			$scope.setCurrentQuestion = function (question) {
 				$scope.setCurrentQuestion({ question: question });
 			}
 

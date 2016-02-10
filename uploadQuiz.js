@@ -1,5 +1,5 @@
-var Firebase = require('firebase'); 
-var firebaseUrl = 'https://quizsw.firebaseio.com/' + '/quizzes';
+var Firebase = require('firebase');
+var firebaseUrl = 'https://quiz-sample.firebaseIO.com/' + 'quizzes';
 
 var ref = new Firebase(firebaseUrl);
 
