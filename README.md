@@ -191,7 +191,7 @@ $scope.quizzes = [{name: 'Angular'}, {name: 'HTML/CSS'}]
 $scope.pastQuizzes = []
 ```
 
-####
+#### 
 
 ```
 var app = angular.module('quizApp');
@@ -448,6 +448,8 @@ app.js - state for nested views
 #### 
 Our routes should be set up to hold our question list on the left in questionListWrapperView.html.  Open that and set it up so it looks like the screenshot above.  You'll want all the same buttons and wire it up to the controller.
 
+CheckAnswers and Reset should be made to work
+
 #### 
 
 We nested views, but we did not nest controllers, so we can bind to the parent controller we've already set up (quizCtrl)
@@ -457,12 +459,12 @@ The Rest button will use the reset function on your controller
 The question list will be bound to our questions array.
 It needs to watch the currentQuestion to determine when to bold an item 
 
-We don't need to set up anything else for now.  We'll get more functionality into this code tomorrow with directives.
 
 #### 
 
-questionListWrapperView.html
 ```
+questionListWrapperView.html
+
 <div>
 	<div ng-if="saving">
 		<div ng-include="'components/quiz/partials/saveQuizPrompt.html'"></div>
@@ -493,7 +495,7 @@ Our routes should be set up to hold our current question on the right in questio
 
 We will change how we show the current question based on it's `qType`.
 
-Try and get two layouts that look like this:
+Try and get two layouts† that look like this:
 
 
 <img src="http://i.imgur.com/OcCraj4.png" width="100%" height="100%"></img>
@@ -504,7 +506,38 @@ Try and get two layouts that look like this:
 Look back on your code from last week and remember how to do this.  This should be nothing new.
 
 #### 
-You really want to see code?  You can find it in the solution branch. 
+```
+Multiple choice 
+
+<div>
+	<div ng-if="question">
+		<h2> {{question.title}} </h2>
+		<div>
+			<div ng-repeat="choice in question.choices">
+				<input ng-checked="answers[question.id] === choice" ng-click="update(choice)" name="answer" type="radio"> {{ choice }}
+				<br>
+			</div>
+		</div>
+		<br />
+		<button class="saveBtn" ng-click="saveAnswer(selected)"> Save and Continue </button>
+	</div>
+</div>
+```
+
+```
+fill in the blank
+
+<div>
+	<div ng-if="question">
+		<h2> {{formattedQuestion}} </h2>
+
+		<br />
+		<input type="text" placeholder="Your answer here" ng-model="answer" ng-keyup="handleEnter($event, answer)"/>
+		<br />
+		<button class="saveBtn" ng-click="saveAnswer(answer)"> Save and Continue </button>
+	</div>
+</div>
+```
 
 ### Wire it all together
 
@@ -519,30 +552,452 @@ You have mock data you can put in your service to test your code.
 Nope, no further hints.  Give it a solid try before peeking at the solution code or grabbing a mentor.
 
 
-## Quiz Page (Day 2)
+## QuestionList Directive (Day 2)
 
-### Quiz List
+### Move the view into a template
 
-#### Move
+#### 
+The first thing we want to do is move some code around.
 
-#### Logic
+In the quiz folder, create a new folder called `partials`.  
+In this new folder create a file called `quizListView.html`
+
+In the quiz folder create a `questionListDirective.js` file.  
+Make a directive in that file that uses the view we just created as it's template URL.
+
+Take the bottom half of `questionListWrapperView.html` starting at the div with the ng-repeat and
+move it out of that file into the the new partial view we created.
+
+If you test it now it should work exactly as it did before.  We didn't change anything, but we did move some things.  This will come in handy because we're going to re-use this question list on another screen once we can save our results.
+
+#### 
+
+__More in-depth__
+My directive is called `question-list` inside of `questionListDirective.js` and it returns an object with a single property : `templateUrl` with a value pointing to the `quizListView.html`.
+
+That quiz list view has the ng-repeat block that used to be found in the quizListWrapper.  
+
+My quiz list wrapper has some buttons to check answers, reset, etc and a directive to handle the actual list of questions.
+
+#### 
+```
+quizListWrapperView.html
+
+<div>
+	<div ng-if="saving">
+		<div ng-include="'components/quiz/partials/saveQuizPrompt.html'"></div>
+	</div>
+	<div class="buttons">
+		<button ng-click="savePrompt()">Save Answers</button>
+		<button ng-click="checkMyAnswers()">Check Answers</button>
+		<button ng-click="reset()">Reset</button>
+		<input name="checkAnswers" type="checkbox" ng-model="obj.instant" ng-click="checkForResults()">
+		<label for="checkAnswers">Instant Gratification </label>
+	</div>
+	<question-list></question-list>
+</div>
+```
+
+```
+quizListView.html
+
+
+<div ng-repeat="question in questions track by question.id">
+	<p ng-click="setQuestion(question)"><span ng-class="{'bold': question === currentQuestion}">{{question.id}}. {{question.title}} </span></p>
+
+	<span ng-if="results.done || obj.instant">
+		<span ng-if="results[question.id]"><i class="fa fa-check fa-lg blue"></i></span>
+	<span ng-if="!results[question.id] && answers[question.id]"><i class="fa fa-times fa-lg orange"></i></span>
+	</span>
+	<span> {{answers[question.id]}} </span>
+</div>
+```
+
+```
+qestionListDirective.js
+
+var app = angular.module('quizApp');
+
+app.directive('questionList', function () {
+	templateUrl: 'components/quiz/partials/questionListView.html',
+});
+
+```
+
+
+### Setup the isolate scope
+
+#### 
+
+Setup an isolate scope in our question list directive that has the following properties:
+* questions
+* answers
+* currentQuestion
+* setCurrentQuestion
+
+They should all be two-way bindings except for setCurrentQuestion that is an expression.
+
+Pass in the matching values from the controller
+
+If you ensure the property names on the controller match the ones you use here you won't have to change the template file.  If you want to see the separation, change the property names in various places and find the corresponding place to change to get it working again.
+
+#### 
+__isolate scope__
+We create an isolate scope by adding a scope property on the object we are returning in our directive (right next to templateUrl).  The value of this property is an object.  For keys we list the properties we are going to want to add to our scope.  For values on those properties we tell the directive how to treat that property.
+
+In this manner we're actually setting up instructions for the scope, not an actual object to be used as scope.
+
+`= means two-way binding`
+`& means expression`
+
+__passing in values__
+To pass values into our directive we have to pass them in via the html.
+Add an attribute to our `<question-list></question-list>` element for every property we added to the scope.  
+Give those attributes values equal to the property names on our controller. (Be sure to use kebab case)
+
+So if my isolate scope had a property called `personName` and my controller had a property on its scope called `pName` I would have this in my directive:
+```
+scope:{
+    personName:'='
+}
+```
+and this in my html
+`<question-list personName="pName"></question-list>`
+
+This is going to create a two-way binding between the personName property on my directive and the pName property on my controller.  
+
+Lets say I wanted to re-use this question-list using a different person.  All I have to do is change what property on my controller I'm pointing to like this:
+`<question-list personName="notPNameButSomethingDifferent"></question-list>`
+
+Follow the same patterns and setup the question list with the attributes listed above.
+
+You should now have a directive that can use any set of questions and report the answers back to any array while tracking their currentQuestion separately. 
+
+
+#### 
+```
+questionListDirective.js
+
+var app = angular.module('quizApp');
+
+app.directive('questionList', function () {
+	return {
+		scope: {
+			obj: '=',
+			questions: '=',
+			results: '=',
+			answers: '=',
+			currentQuestion: '=',
+			setCurrentQuestion: '&?'
+		},
+		templateUrl: 'components/quiz/partials/questionListView.html'
+    }
+}
+```
 
 
 ## Multiple choice directive
 
+### Create the template
+
+#### 
+Create a file called `multipleChoiceTmpl.html` and move your multiple choice html code inside it (from questionDetailView).
+
+Create a directive file called `multipleChoiceDirective.js` and setup a directive using the above file as its templateUrl.
+
+Go back into questionDetailView and add your multipleChoiceDirective into the html
+
+Test it and ensure everything still works
+
+#### 
+This should follow the same pattern as above for moving html code into a template.
+
+#### 
+```
+multipleChoiceTmpl.html
+
+<div>
+	<div ng-if="question">
+		<h2> {{question.title}} </h2>
+		<div>
+			<div ng-repeat="choice in question.choices">
+				<input ng-checked="answers[question.id] === choice" ng-click="update(choice)" name="answer" type="radio"> {{ choice }}
+				<br>
+			</div>
+		</div>
+		<br />
+		<button class="saveBtn" ng-click="saveAnswer(selected)"> Save and Continue </button>
+	</div>
+</div>
+```
+
+```
+multipleChioceDirective.js
+
+var app = angular.module('quizApp');
+
+app.directive('multipleChoice', function () {
+    return {
+	   templateUrl: 'components/quiz/partials/multipleChoiceTmpl.html'
+    }
+})
+```
+
+```
+questionDetailView.html
+
+<div>
+	<div ng-if="currentQuestion.qtype === 'multiple'">
+		<multiple-choice></multiple-choice>
+		<br />
+	</div>
+	...
+</div>
+```
+
+### Isolate the scope
+
+#### 
+Once again we want an isolate scope.  
+This scope is going to have the following properties:
+* question '='  - This is the current question
+* save '&' - This is a function we can call to save our selected answer
+* answers '=' - This is an array of all the answers we'll use to track and show their answer to the current question
+
+Pass the values in via the html.
+
+
+#### 
+
+__Isolate scope__
+```
+		scope: {
+			question: '=',
+			save: '&',
+			answers: '='
+		},
+```
+
+__Passing values in__
+This is going to be done in our questionDetailView.html on our `<multiple-choice>` directive element.
+
+You will need an attribute for every property on the isolate scope bound back to properties on our controller.  It is important to note that this directive is NOT inside our list.  But on the side of it using the same parent controller.  So that is where the bindings for our directive are coming from.
+
+#### 
+```
+multipleChoiceDirective.js
+
+var app = angular.module('quizApp');
+
+app.directive('multipleChoice', function () {
+	return {
+		scope: {
+			question: '=',
+			save: '&',
+			answers: '='
+		},
+		templateUrl: 'components/quiz/partials/multipleChoiceTmpl.html'
+    }
+})
+```
+
+
+```
+questionDetailView.html
+
+<multiple-choice question="currentQuestion" save="saveAnswer(id, answer)" answers="answers">
+</multiple-choice>
+```
+
+currentQuestion, saveAnswer, and answers are all properties on quizCtrl.
+id and answer (for saveAnswer) are going to be passed in from our directive code.
+
+### Restrict and Replace
+
+#### 
+Add a property on our directive to restrict the directive to be usable as an attribute or an element.
+Add a property on our directive to specify that we want to replace whatever element we are applied to with our template.
+
+#### 
+The valid values for the restrict property are:
+* 'A'   for attribute
+* 'E'   for element
+* 'C'   for class
+
+The valid values for replace are:
+* true
+* false
+
+Both of these properties are added the object that a directive returns (at the same level as templateUrl).
+
+#### 
+
+```
+restrict: 'AE',
+replace: true,
+```
+
+### Controller
+
+#### 
+We need our controller to be able to do 3 things:
+* watch for the question to change and blank out selected when it does
+* update the currently selected answer with a passed in choice
+* save our answer back to the controller
+
+#### 
+__$watch__
+$watch is a utility method on scope that can tell us when a certain property changes.  If I:
+`$scope.$watch('cheese', function(){`
+The function I pass it will be invoked every time my `$scope.cheese` property is changed.
+
+In this case we want to watch the `question` property.
+Inside our function we want to set `$scope.selected` to be an empty string
+
+__update__ 
+We want a `$scope.update` function that recieves a `choice` as a parameter.
+If choice is truthy
+    set `$scope.selected` equal to choice
+    
+__saveAnswer__
+We want a `$scope.saveAnswer` function that receives a `selected` as a parameter
+
+It will invoke `$scope.save` and pass in an object:
+```
+{
+    id: $scope.question.id,
+    answer: selected
+}
+``` 
+
+We are sending the controller's save method the id of the question we're saving an answer for, and what answer they should save for that question id.
+
+`$scope.save` comes from our isolate scope vai 2 way binding.  So this function is really a function that lives on our controller, we just have a pointer to it.
+
+#### 
+```
+multipleChoiceDirective.js
+
+var app = angular.module('quizApp');
+
+app.directive('multipleChoice', function () {
+	return {
+		scope: {
+			question: '=',
+			save: '&',
+			answers: '='
+		},
+		restrict: 'AE',
+		replace: true,
+		templateUrl: 'components/quiz/partials/multipleChoiceTmpl.html',
+		controller: function ($scope, $attrs) {
+			$scope.$watch('question', function () {
+				$scope.selected = '';
+			})
+			$scope.update = function (choice) {
+				if (choice) {
+					$scope.selected = choice;
+				}
+			}
+			$scope.saveAnswer = function(selected) {
+				
+				$scope.save({id: $scope.question.id, answer: selected});
+			}
+			
+		}
+
+
+	}
+})
+```
 
 ## Fill in the blank directive
 
+### Follow all the same steps for the multipleChoiceDirective but naming things fillBlankDirective
+
+#### 
+Differences :
+* Our template file needs to contain the fill in the blank html from questionDetailView instead of the multiple choice code
+* The file names are going to be `fillBlankDirective.js` and `fillBlankTmpl.html`
+* The controller will work different and is covered in the next step
 
 
-* Setup basic routes
-* Take a simple quiz
-* Show basic Results
-* Style application
+### The controller on the directive
 
-Day 2
---
-* Move basic quiz into directive
+#### 
+`$scope.saveAnswer` works the exact same as it does in the multiple choice directive.
+
+`$scope.handleEnter` needs to take in two parameters: e, answer
+If `e.keyCode` is 13  (That's the keycode for the enter key)
+    call $scope.saveAnswer with the answer
+
+`$scope.watch('question'` Needs to look in our answers object for the question.id we have on `$scope.question`.   If it exists then we know this question has been answered and we want to set `$scope.answer` equal to the answer from our answers.
+    If it doesn't exist we want to set answer equal to an empty string.
+
+#### 
+__answers__
+
+`$scope.answers` is an object.  Not an array.  But we don't know our question id at the time of writing the code.  So we need to access it dynamically using square bracket notation.
+
+#### 
+```
+fillBlankDirective.js
+
+var app = angular.module('quizApp');
+
+app.directive('fillBlank', function () {
+	return {
+		scope: {
+			question: '=',
+			save: '&',
+			answers: '='
+		},
+		restrict: 'AE',
+		replace: true,
+		templateUrl: 'components/quiz/partials/fillBlankTmpl.html',
+		controller: function ($scope) {
+			$scope.$watch('question', function () {
+                $scope.formattedQuestion = $scope.question.title;
+				if ($scope.answers[$scope.question.id]) {
+					$scope.answer = $scope.answers[$scope.question.id];
+				} else {
+					$scope.answer = '';
+				}
+			})
+
+			$scope.handleEnter = function (e, answer) {
+				if (e.keyCode === 13) {
+					$scope.saveAnswer(answer)
+				}
+			}
+
+			$scope.saveAnswer = function (answer) {
+				$scope.save({ id: $scope.question.id, answer: answer })
+
+			}
+		}
+	}
+})
+```
+
+## Testing (Day 2)
+
+You should be able to test your application with the mock data you set up on day one.
+
+__Home Screen Functionality__
+You should see a list of quizzes to take (from mock data)
+You should be able to open a quiz.
+You should see results (unpopulated) section.
+
+__Quiz Screen functionality__
+You see a list of questions on the left hand side
+You see the current question on the right half of the screen
+The correct directive is used based on the question type (multiple choice or fill in the blank)
+You can answer a question 
+You can click `CheckAnswers` button and it will mark a question as correct or incorrect.
+You can click reset and it will blank out all answers.
+You can click home and it will go back to the home screen.
+
 
 Day 3
 --
@@ -550,7 +1005,7 @@ Day 3
 
 Day 4
 --
-* Firebase Auth
+* Firebase Auth ?
 
 Day 5
 --
