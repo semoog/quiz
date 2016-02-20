@@ -80,18 +80,17 @@ app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {
 		return dfd.promise;
 	}
 
-	this.saveMyAnswers = function (answers, quiz, quizDate, quizName) {
+	this.saveMyAnswers = function (answers, quiz, quizDate, quizNickName) {
 		var dfd = $q.defer();
 		var myAnswers = new Firebase(firebaseUrl + '/answers/' + quiz + '/' + quizDate + '/answers');
-		if (quizName) {
-			myAnswers.parent().set({name: quizName})
+		if (quizNickName) {
+			myAnswers.parent().set({name: quizNickName})
 		}
 		myAnswers.set(answers);
 		dfd.resolve('answers saved');
 
 		return dfd.promise;
 	}
-
 
 	this.checkMyAnswers = function (questions, answers) {
 		var dfd = $q.defer();

@@ -2,7 +2,7 @@ Day 1
 --
 
 
-## Folder Structure (Day 1)
+## D1) Folder Structure
 ### Explanation
 ####
 The first thing we want to do is create our folder structure.  Proper and consistent folder structure can save you and your team hours of work.  The most important rule of folder structure is consistency.  After that there is more than one correct way to structure the files in an application.  For this project we will be using a feature based approach for our files.
@@ -41,7 +41,7 @@ app.js
 ####
 ####
 
-## Create and test your app (Day 1)
+## Create and test your app 
 
 ### Setup the App
 
@@ -269,9 +269,6 @@ The final code should look something like this.  Variable names can be different
 </div>
 ```
 
-### Setup fake data in service
-TODO
-
 ### Home page done - recap
 
 #### 
@@ -280,7 +277,7 @@ We've finished our first route.  We set up our route, injected ng-routing, and t
 We then worked in those files to bind an array of quizzes to the ui.
 
 
-## Quiz Page (Day 1) 
+## Quiz Page
 
 ### Setup Route
 
@@ -324,7 +321,8 @@ Once you have these pieces you can bind `{{quizName}}` in the `quizContainerView
 
 #### 
 
-Look at the QuizSample object to get an idea of the data you're working with.
+Look at the QuizSample object to get an idea of the data you're working with!!!
+This will be very important.  Copy this structure when setting up your mocks.
 
 
 _Your controller needs to accept:_
@@ -539,6 +537,32 @@ fill in the blank
 </div>
 ```
 
+### Mocking data in the Service
+
+#### 
+Your service needs to mock the ability to 
+* getQuizNames - This will turn an array of quiz names.
+* getQuestions - given a quizName it can get all questions for that quiz
+* checkAnswers - This is not a mock, but given an array of questions and an object of answers it can check if the answer is the correct answer
+
+Each of these will later be swapped to get data from the internet. Create your own promise in each function to return and resolve.
+
+#### 
+The structure of each question will be in the same structure as what is in `quizSampleObject.js` .  
+* QuizNames are the names of the top level properties on our quizSampleObject.
+* getQuestions will return an array of questions - see `quizSampleObject.js` for example
+* checkAnswers takes in an array of questions and an answersObject that represents someones answers to those questions
+    * Answers is an object where the keys are question ids and the values are the correct answer
+    * If you look through the questions you will need to check the question type (multiple or blank)
+        * Multiple choice questions need to look inside of question.choices to see if that choice is correct to compare against the answer
+        * fill in the blank questions just have a correct property can can be compared against the answer string.
+    * Create a results object that tracks each answer by question id. Use the value of true if its correct.
+    
+#### 
+
+TODO - Make code sample for this - the solution is completed and not mocked.
+
+
 ### Wire it all together
 
 #### 
@@ -552,7 +576,7 @@ You have mock data you can put in your service to test your code.
 Nope, no further hints.  Give it a solid try before peeking at the solution code or grabbing a mentor.
 
 
-## QuestionList Directive (Day 2)
+## D2) QuestionList Directive
 
 ### Move the view into a template
 
@@ -980,10 +1004,12 @@ app.directive('fillBlank', function () {
 })
 ```
 
-## Testing (Day 2)
+## Testing
 
+### Test
 You should be able to test your application with the mock data you set up on day one.
 
+####
 __Home Screen Functionality__
 You should see a list of quizzes to take (from mock data)
 You should be able to open a quiz.
@@ -998,15 +1024,228 @@ You can click `CheckAnswers` button and it will mark a question as correct or in
 You can click reset and it will blank out all answers.
 You can click home and it will go back to the home screen.
 
+## D3) Using firebase in our service
 
-Day 3
---
-* Firebase
+### Note
 
-Day 4
---
-* Firebase Auth ?
+#### 
+For this step we are going to replace existing functions in our service.  Be sure to remove the old mock functionality.
 
-Day 5
---
-* Review and personal project
+### Create a new firebase app
+
+#### 
+Go to firebase and create a new app.  Copy out your app url.
+
+### Upload to your own firebase
+
+Open uploadQuiz.js and paste in the url you just copied.
+
+Open the terminal/command line where you are at. 
+
+Type `node uploadQuiz.js`  (You will need to install nodejs if you haven't yet)
+
+Open your firebase on their website and nagivate your app.  You should see some quiz data.
+
+
+### Bring in Firebase in your app
+
+Reference the scripts:
+```
+<script src="https://cdn.firebase.com/js/client/2.3.1/firebase.js"></script>
+<script src="https://cdn.firebase.com/libs/angularfire/1.1.3/angularfire.min.js"></script>
+```
+
+Add firebase to your module in app.js
+`var app = angular.module('quizApp', ['ui.router', 'firebase']);`
+
+Inject the angular fire `$firebaseObject` and `$firebaseArray` into your quizService.
+`app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {`
+
+Test your imports by checking the console in the browser for no errors.
+
+### Set up the firebase refs
+
+#### 
+Setup your firebase Url on a var.
+Create a firebase ref to `quizzes`, a $firebaseObject using that ref.
+
+Create another firebase ref to `answers` and pass that ref into a $firebasearray.  
+
+#### 
+Creating a firebase ref looks like this:
+`var newRef = new Firebase(urlGoesHere);`
+
+Creating a $firebase object looks like this
+`var targetFirebaseObj = $firebaseObject(newRef)` - Notice we are passing in the newRef created above.
+
+This is creating an angular fire link for us so that we have a two way connction between our firebase server and our code.  By changing the url we pass in when we make the ref we can focus on specific parts of our firebase structure.
+
+#### 
+Code
+```
+var firebaseUrl = 'https://quiz-sample.firebaseIO.com'
+
+var quizzes = new Firebase(firebaseUrl + '/quizzes');
+var quizzesObj = $firebaseObject(quizzes);
+var answers = new Firebase(firebaseUrl + '/answers')
+var pastQuizArray = $firebaseArray(answers);
+```
+
+### Get available quiz names
+
+#### 
+Use our new firebase references to get a list of names of all available quizzes and send them back to the controller in the resolve function of our promise.
+
+Warning: On a firebase object you will get back extra properties.  You'll need to filter these out.
+Warning 2: Firebase throws an error if there is a problem.  Use a `.catch` on the promise as well
+
+#### 
+__Knowing when we have data__
+The primary hook we have into getting our firebase data is the $loaded function.
+It is invoked on an firebase object or array and returns a promise.  
+It doesn't pass anything in, but when it is invoked we know the firebase object or array we used it on now has more data.
+
+It looks something like this:
+
+```
+targetFirebaseObj.$loaded().then(function(){
+    //targetFirebaseObj now has some data on it!
+})
+
+```
+
+__Filtering out unwanted property names__
+We can used two criteria to know if it's one of our properties.
+* our object `hasOwnProperty`
+* the first character is not a `$`
+
+#### 
+__ Code __
+```
+var getNames = function (list) {
+    var names = [];
+    for (var key in list) {
+        if (list.hasOwnProperty(key) && key.charAt(0) !== '$') {
+            names.push({ 'name': key, 'displayName': list[key].name });
+        }
+    }
+    return names;
+}
+
+this.getQuizNames = function () {
+    var dfd = $q.defer();
+
+    quizzesObj.$loaded().then(function () {
+        var names = getNames(quizzesObj);
+        dfd.resolve(names);
+    })
+        .catch(function (err) {
+            dfd.reject(err);
+        })
+    return dfd.promise;
+}
+```
+
+### Get questions
+
+#### 
+The previous step only got us quiz names. We need the actual questions.
+This is going to work identically to the step above except:
+* We don't have to parse out the quiz name.
+* The quiz name will be passed in as a parameter
+* We can use the quiz name to get to the exact quiz we want and then get the `.questions` out.
+
+#### 
+__Hint code__
+`var thingIWant = targetFirebaseObj[propertyKey].thingIWant`
+
+#### 
+__Code__
+```
+this.getQuestions = function (name) {
+    var dfd = $q.defer();
+    quizzesObj.$loaded().then(function () {
+        var questions = quizzesObj[name].questions;
+        dfd.resolve(questions);
+    })
+    .catch(function (err) {
+            dfd.reject(err)
+        })
+    return dfd.promise;
+}
+```
+
+### Test questions appear in quiz
+
+#### 
+If you set up your mock using promises the first time then the rest of your code should just work.
+Test it and make sure you can open a quiz, see the quiz questions, and take the quiz.
+
+### save answers
+
+#### 
+Now that we have a database we want to save our answers.
+
+In our service, create a new function called `saveMyAnswers`.
+It takes in: 
+* answers - an array of answers
+* quiz - The category of the quiz IE - Angular, HTML.  This is the same value as the key from our quizzesObj
+* quizDate - The dateTime this quiz was taken (now)
+* quizNickName - A nickname for this quiz (optional and defaulted to 'answers').  This will replace the date and time.
+
+It creates a new firebaseRef using the first 3 parameters above in this format
+`firebaseUrl + '/answers/' + quiz + '/' + quizDate + '/answers'`
+
+It saves/sets the data and then resolves the promise with 'answers saved'
+
+#### 
+__Pseudo Code__
+```
+var dfd = defer()
+var ref = Firebase( url )
+
+if(nickname)
+    ref.parent.set({ name: nickName })
+
+ref.set(actualDataWeWanttoSave)
+resolve('...')
+
+return dfd.promise
+```
+
+#### 
+__Actual Code__
+```
+var dfd = $q.defer();
+var myAnswers = new Firebase(firebaseUrl + '/answers/' + quiz + '/' + quizDate + '/answers');
+if (quizNickName) {
+    myAnswers.parent().set({name: quizNickName})
+}
+myAnswers.set(answers);
+dfd.resolve('answers saved');
+
+return dfd.promise;
+```
+
+## BD) Instant gratification
+### When taking a quiz get instant results after answering a questions
+
+#### 
+You will need to do the following to finish this black diamond.
+
+1) Make it so that when this checkbox is checked all question answers and graded instantly with results shown in the question list.
+
+
+## BD) History
+### Get the saved questions and show them on the history page
+
+#### 
+You will need to do the following to finish this black diamond.
+
+1) The home page will list the nicknames/dates of all answers that have been saved
+2) Users can click on the one of the nicknames and go to a new route to see those answers again
+3) The new route page uses all of the directives we have created
+4) The screen looks exactly like the take a quiz screen except that it is read-only so:
+    - No functioning buttons
+    - No changing any answers
+    - Only browsing/looking at the answers

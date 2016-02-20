@@ -1,10 +1,4 @@
 # quiz
-
-NOTES:
-used $watch in directive
-
-
-
 For sample quiz questions:
 
 ```
