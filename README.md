@@ -6,8 +6,6 @@ Day 1
 ### Explanation
 ####
 The first thing we want to do is create our folder structure.  Proper and consistent folder structure can save you and your team hours of work.  The most important rule of folder structure is consistency.  After that there is more than one correct way to structure the files in an application.  For this project we will be using a feature based approach for our files.
-####
-####
 
 ### Code
 ####
@@ -38,8 +36,6 @@ app.js
   /images
     (already included)
 ```
-####
-####
 
 ## Create and test your app 
 
