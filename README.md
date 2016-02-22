@@ -150,15 +150,7 @@ Add the following code:
 		.state('home', {
 			url: '/',
 			templateUrl: 'components/home/homeView.html',
-			controller: 'HomeCtrl',
-			resolve: {
-				quizList: function (quizService) {
-					return quizService.getQuizNames();
-				},
-				pastQuizList: function (quizService) {
-					return quizService.getPastQuizzes();
-				}
-			}
+			controller: 'HomeCtrl'
 		})
   })
 ```
@@ -175,7 +167,7 @@ Then open that server url in the browser and you should be redirected to the hom
 ### Setting up the home Ctrl
 
 #### 
-If you haven't yet create your home controller.
+If you haven't yet created your home controller.
 Give it an array of quizzes and an array of pastQuizzes.
 
 For now quizzes need to be objects with a name property and that's it.
@@ -186,19 +178,6 @@ For now quizzes need to be objects with a name property and that's it.
 $scope.quizzes = [{name: 'Angular'}, {name: 'HTML/CSS'}]
 $scope.pastQuizzes = []
 ```
-
-#### 
-
-```
-var app = angular.module('quizApp');
-
-app.controller('HomeCtrl', function($scope, quizList, pastQuizList) {
-	console.log(pastQuizList)
-	$scope.quizzes = quizList;
-	$scope.pastQuizzes = pastQuizList;
-})
-```
-
 
 ### Setting up the home page
 
