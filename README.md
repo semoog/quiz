@@ -27,7 +27,7 @@ app.js
       questionDetailView.html
   /results
     resultsCtrl.js
-    resultsView.js
+    resultsView.html
   /services
     quizService.js
 /public
@@ -150,15 +150,7 @@ Add the following code:
 		.state('home', {
 			url: '/',
 			templateUrl: 'components/home/homeView.html',
-			controller: 'HomeCtrl',
-			resolve: {
-				quizList: function (quizService) {
-					return quizService.getQuizNames();
-				},
-				pastQuizList: function (quizService) {
-					return quizService.getPastQuizzes();
-				}
-			}
+			controller: 'HomeCtrl'
 		})
   })
 ```
@@ -175,7 +167,7 @@ Then open that server url in the browser and you should be redirected to the hom
 ### Setting up the home Ctrl
 
 #### 
-If you haven't yet create your home controller.
+If you haven't yet created your home controller.
 Give it an array of quizzes and an array of pastQuizzes.
 
 For now quizzes need to be objects with a name property and that's it.
@@ -186,19 +178,6 @@ For now quizzes need to be objects with a name property and that's it.
 $scope.quizzes = [{name: 'Angular'}, {name: 'HTML/CSS'}]
 $scope.pastQuizzes = []
 ```
-
-#### 
-
-```
-var app = angular.module('quizApp');
-
-app.controller('HomeCtrl', function($scope, quizList, pastQuizList) {
-	console.log(pastQuizList)
-	$scope.quizzes = quizList;
-	$scope.pastQuizzes = pastQuizList;
-})
-```
-
 
 ### Setting up the home page
 
@@ -211,11 +190,7 @@ The home page should look like this
 
 1. Be sure to bind your quizzes to the controller
 2. Quizzes in the top section should route to the quiz.view state and pass in their name on the quizName state param
-3. For historical quizzes you'll need to nest ng-repeats.  
-    Display the name/id of the past quiz.
-    Then repeat for each quiz in that category and show the quiz name.
-    Lastly route each of the historical quizzes to the results state passing in both quizName and quiz route parameters. (Hint: ng-repeat creates a new scope, so you might need to walk up using $parent to get the correct values)(Hint 2: You can ng-repeat over an object getting the key value pair)
-    
+
 
 #### 
 
@@ -228,16 +203,6 @@ And a section to view past quizzes bound to `pastQuizzes` on the controller.
 Iterating over an object to get a key value pair:
 `ng-repeat="(key, value) in array"`
 
-An example of nested repeats going up to the parent :
-```
-<div ng-repeat="outer in parentArray" class="centered">
-    {{ parent.$id }}
-    <div ng-repeat="(k, v) in outer">
-        <a ng-if="v.name" ui-sref="results({param1: $parent.outer.$id, param2: k})">{{v.name}}</a>
-        <a ng-if="!v.name" ui-sref="results({param1: $parent.outer.$id, param2: k})">{{k}}</a>
-    </div>
-</div>
-```
 
 #### 
 
@@ -255,20 +220,13 @@ The final code should look something like this.  Variable names can be different
 <div class="past-quizzes">
   <h1> View Past Quizzes </h1>
 <!--  <hr>-->
-  <div ng-repeat="quizName in pastQuizzes" class="centered">
-    {{ quizName.$id }}
-    <div ng-repeat="(quiz, value) in quizName">
-      <a ng-if="value.name" ui-sref="results({quizName: $parent.quizName.$id, quiz: quiz})">{{value.name}}</a>
-      <a ng-if="!value.name" ui-sref="results({quizName: $parent.quizName.$id, quiz: quiz})">{{quiz}}</a>
-    </div>
-  </div>
 </div>
 ```
 
 ### Home page done - recap
 
 #### 
-We've finished our first route.  We set up our route, injected ng-routing, and told it to use the homeView and homeController files for the home page.
+We've finished our first route.  We set up our route, injected ui-router, and told it to use the homeView and homeController files for the home page.
 
 We then worked in those files to bind an array of quizzes to the ui.
 
@@ -317,8 +275,69 @@ Once you have these pieces you can bind `{{quizName}}` in the `quizContainerView
 
 #### 
 
-Look at the QuizSample object to get an idea of the data you're working with!!!
+This is a sample Quiz that you can look at to get an idea of the data you're working with!!!
 This will be very important.  Copy this structure when setting up your mocks.
+
+```
+var quizSampleObj = {
+		'html': {
+			id: 1,
+			name: 'HTML',
+			questions: [{
+				id: 1,
+				title: 'Box-model order from outside in is: Content, Border, Margin, Padding (T/F)',
+				qtype: 'multiple',
+				choices: ['T', 'F'],
+				correct: 1
+			},
+				{
+					id: 2,
+					title: 'Which is not a semantic html element?',
+					qtype: 'multiple',
+					choices: ['header', 'div', 'footer', 'article'],
+					correct: 1
+				}]
+		},
+		'angular': {
+			id: 2,
+			name: 'Angular',
+			questions: [{
+				id: 1,
+				title: 'DOM manipulation should be performed in an angular directive? (T/F)',
+				qtype: 'multiple',
+				choices: ['T', 'F'],
+				correct: 0
+			},
+            {
+                id: 2,
+                title: 'Which is not a valid option for a directive?',
+                qtype: 'multiple',
+                choices: ['transclude', 'link', 'scope', 'raccoon'],
+                correct: 3
+            },
+            {
+                id: 3,
+                title: 'ng-click is a built-in angular _____.',
+                qtype: 'blank',
+                correct: 'directive'
+            },
+            {
+                id: 4,
+                title: 'DOM manipulation should be performed in an angular directive? (T/F)',
+                qtype: 'multiple',
+                choices: ['T', 'F'],
+                correct: 0
+            },
+            {
+                id: 5,
+                title: 'Which is not a valid option for a directive?',
+                qtype: 'multiple',
+                choices: ['transclude', 'link', 'scope', 'The frenzied scratching of a rabid badger'],
+                correct: 3
+            }]
+		}
+	};
+```
 
 
 _Your controller needs to accept:_
