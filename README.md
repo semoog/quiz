@@ -9,7 +9,7 @@ The first thing we want to do is create our folder structure.  Proper and consis
 
 ### Code
 ####
-* Fork and clone this repository
+* Create a new repository
 * Create the following files in this structure in your project folder
 
 ```
