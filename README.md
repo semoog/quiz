@@ -27,7 +27,7 @@ app.js
       questionDetailView.html
   /results
     resultsCtrl.js
-    resultsView.js
+    resultsView.html
   /services
     quizService.js
 /public
@@ -190,11 +190,7 @@ The home page should look like this
 
 1. Be sure to bind your quizzes to the controller
 2. Quizzes in the top section should route to the quiz.view state and pass in their name on the quizName state param
-3. For historical quizzes you'll need to nest ng-repeats.  
-    Display the name/id of the past quiz.
-    Then repeat for each quiz in that category and show the quiz name.
-    Lastly route each of the historical quizzes to the results state passing in both quizName and quiz route parameters. (Hint: ng-repeat creates a new scope, so you might need to walk up using $parent to get the correct values)(Hint 2: You can ng-repeat over an object getting the key value pair)
-    
+
 
 #### 
 
@@ -207,16 +203,6 @@ And a section to view past quizzes bound to `pastQuizzes` on the controller.
 Iterating over an object to get a key value pair:
 `ng-repeat="(key, value) in array"`
 
-An example of nested repeats going up to the parent :
-```
-<div ng-repeat="outer in parentArray" class="centered">
-    {{ parent.$id }}
-    <div ng-repeat="(k, v) in outer">
-        <a ng-if="v.name" ui-sref="results({param1: $parent.outer.$id, param2: k})">{{v.name}}</a>
-        <a ng-if="!v.name" ui-sref="results({param1: $parent.outer.$id, param2: k})">{{k}}</a>
-    </div>
-</div>
-```
 
 #### 
 
@@ -234,20 +220,13 @@ The final code should look something like this.  Variable names can be different
 <div class="past-quizzes">
   <h1> View Past Quizzes </h1>
 <!--  <hr>-->
-  <div ng-repeat="quizName in pastQuizzes" class="centered">
-    {{ quizName.$id }}
-    <div ng-repeat="(quiz, value) in quizName">
-      <a ng-if="value.name" ui-sref="results({quizName: $parent.quizName.$id, quiz: quiz})">{{value.name}}</a>
-      <a ng-if="!value.name" ui-sref="results({quizName: $parent.quizName.$id, quiz: quiz})">{{quiz}}</a>
-    </div>
-  </div>
 </div>
 ```
 
 ### Home page done - recap
 
 #### 
-We've finished our first route.  We set up our route, injected ng-routing, and told it to use the homeView and homeController files for the home page.
+We've finished our first route.  We set up our route, injected ui-router, and told it to use the homeView and homeController files for the home page.
 
 We then worked in those files to bind an array of quizzes to the ui.
 
