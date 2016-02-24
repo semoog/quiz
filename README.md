@@ -53,6 +53,8 @@ Setup 3 controllers : `homeCtrl`, `quizCtrl`, `resultsCtrl`
   * ui-router (Google `angular ui-router cdn`)
   * all of your controllers you made in step 1
   * your stylesheet
+  * https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css
+  * https://fonts.googleapis.com/css?family=Roboto:400,500,700,300
 
 
 * Setup your angular app and name it `quizApp`
@@ -424,7 +426,7 @@ _Your controller needs to handle the following to start with:_
 * We need to know which question is the 'current' one that we're looking at.
 * We need to be able to change the current answer.
 * We need to be able to reset our answers so we can start over.
-
+* We need to update 'selected' for multiple choice answers
 
 ####
 
@@ -440,20 +442,40 @@ _Your controller needs to have the following functions to start with:_
 * `checkMyAnswers` - calls a `checkMyAnswers` function on the service and passes in our questions and our answers.  This will receive a promise from the service.  It then sets $scope.results equal to the response of the promise.
 * `reset` - sets the answers array to a new empty object and resets the current question to the first question in the questions array
 * `saveAnswer` - Adds an answer to the answers object and moves to the next question.  If it's the last question it checks for correctness.
+* `update` - Invoked anytime the user clicks a radio button. It needs to store the result on `$scope.selected`
 
 ####
+__quizCtrl.js__
 
 ```
-app.controller('QuizCtrl', function ($scope, questions, quizService, $stateParams) {
+angular.module('quizApp').controller('quizCtrl', function ($scope, quizService, $stateParams, questions) {
 
 	$scope.questions = questions;
 	$scope.answers = {};
-  $scope.results = {};
 	$scope.currentQuestion = $scope.questions[0];
+    $scope.results = {};
+
+   	$scope.saveAnswer = function (answer) {
+		$scope.answers[$scope.currentQuestion.id] = answer;
+		$scope.nextQuestion();
+
+		if ($scope.results.done) {
+			//we've already hit 'check answers' so update the answer results
+			$scope.checkMyAnswers();
+		}
+	};
 
 	$scope.setCurrentQuestion = function (question) {
 		$scope.currentQuestion = question;
 	}
+
+  $scope.handleEnter = function(ev, answer){
+    /* bonus, make this work */
+  }
+
+  $scope.update = function(choice){
+      $scope.selected = choice;
+  }
 
 	$scope.nextQuestion = function () {
 		var idx = $scope.questions.indexOf($scope.currentQuestion);
@@ -469,16 +491,6 @@ app.controller('QuizCtrl', function ($scope, questions, quizService, $stateParam
 			$scope.results = response;
 		});
 	}
-
-  $scope.saveAnswer = function (id, answer) {
-    $scope.answers[id] = answer;
-    $scope.nextQuestion();
-
-    if ($scope.results.done) {
-      //we've already hit 'check answers' so update the answer results
-      $scope.checkMyAnswers();
-    }
-  };
 
 	$scope.reset = function () {
 		$scope.answers = {};
