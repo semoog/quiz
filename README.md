@@ -37,17 +37,17 @@ app.js
     (already included)
 ```
 
-## Create and test your app 
+## Create and test your app
 
 ### Setup the App
 
-#### 
+####
 
 We want to get our angular app set up and make sure it works.
 Setup a basic app using ui-router.  Name your app `quizApp`.
 Setup 3 controllers : `homeCtrl`, `quizCtrl`, `resultsCtrl`
- 
-#### 
+
+####
 * Create your html file and add references to
   * angular.js (Get this from the cdn)
   * ui-router (Google `angular ui-router cdn`)
@@ -60,32 +60,32 @@ Setup 3 controllers : `homeCtrl`, `quizCtrl`, `resultsCtrl`
   * Add your ng-app to your page referencing your app
   * Run your page in the browser and check the console for errors
 
-* Create your controllers in `homeCtrl.js`, `quizCtrl.js`, and `resultsCtrl.js`.  Match the controller name to the file name, without the extension.
+* Create your controllers in `homeCtrl.js` and `quizCtrl.js`.  Match the controller name to the file name, without the extension.
 
-#### 
+####
 TODO
 
 
 ### Creating our first Route
 
-#### 
+####
 
 Set up your first route using the `homeView` and `homeCtrl`
 
-#### 
+####
 
-ui-router is a library that will swap out the content of elements we specify based on the state of our application.  To make this works we need to do three things: 
-- Bring the library into our page, 
-- tell it where we want things to be swapped out, 
+ui-router is a library that will swap out the content of elements we specify based on the state of our application.  To make this work we need to do three things:
+- Bring the library into our page,
+- tell it where we want things to be swapped out,
 - give it instructions for what to swap and when
 
 We bring the library in by adding a reference in index.html and then adding it as a dependency in the module declaration (hint: square brackets).
 
 We add a `ui-view` tag in our index to tell it where to swap things out.
 
-We setup routing instructions by adding a config to our module and giving it `.state`s
+We setup routing instructions (using `$stateProvider`) by adding a config to our module and giving it `.state`s
 
-We also want to add a $urlRouteProvider.otherwise call.  This will force any visitors to the state/route specified if they try to go anywhere we haven't defined.
+We also want to add a $urlRouterProvider.otherwise('/home').  This will force any visitors to the home route if they try to go anywhere we haven't defined.
 
 ##### Overview of routing concepts
 
@@ -93,7 +93,7 @@ UI Routing works based off of a 'state'.  The state in this case is represented 
 
 Each state can also have substates.  In this application we will have 1 substate `quiz.view`.  This is still a string, but we are designating a substate by using a period to separate it from its parent.
 
-#### 
+####
 
 ##### Bring the Library in
 We already added a reference to ui-router in our `index.html`
@@ -150,14 +150,19 @@ Add the following code:
 		.state('home', {
 			url: '/',
 			templateUrl: 'components/home/homeView.html',
-			controller: 'HomeCtrl'
+			controller: 'HomeCtrl',
+      resolve: {
+				quizList: function (quizService) {
+					return quizService.getQuizNames();
+				}
+      }
 		})
   })
 ```
 
 ### Run and test your code
 
-#### 
+####
 You should be able to run your app at this point and test that everything works.
 We used the '/' url path to handle our home page, and we added an otherwise case to force everyone to our set up route.
 Run a server (live-server, http-server, brackets, etc) to serve up our files.  This is now necessary because we're getting templates off of the hard disk.
@@ -166,22 +171,59 @@ Then open that server url in the browser and you should be redirected to the hom
 
 ### Setting up the home Ctrl
 
-#### 
+####
 If you haven't yet created your home controller.
-Give it an array of quizzes and an array of pastQuizzes.
+Give it an array of quizzes.
 
-For now quizzes need to be objects with a name property and that's it.
+The quizzes should come from our resolve that we've done previously.
 
-#### 
+####
+
+To get data passed in from a resolve we just ask for it to be injected by using the name used in the resolve.  `quizList`.
+
+__Code__
 
 ```
-$scope.quizzes = [{name: 'Angular'}, {name: 'HTML/CSS'}]
-$scope.pastQuizzes = []
+app.controller('homeCtrl', function($scope, quizList) {
+	console.log(pastQuizList)
+	$scope.quizzes = quizList;
+})
+```
+
+### Setup service
+
+####
+
+Our home page won't work until we set up a service.
+Why? Because we have a resolve that is asking for that service to be injected.
+
+Setup your service. It needs to have a `getQuizNames` function that returns a promise. Make your promise resolve an array of objects.  Each object has a name property with a value.
+
+We will expand this service in the next part.
+
+####
+__quizService.js__
+```
+angular.module('quizApp').service('quizService', function ($q) {
+
+    this.getQuizNames = function(){
+        var defer = $q.defer();
+
+        defer.resolve([{
+            name: "Angular",
+        },{
+            name: "HTML",
+        }]);
+
+        return defer.promise;
+    }
+
+})
 ```
 
 ### Setting up the home page
 
-#### 
+####
 
 The home page should look like this
 
@@ -192,7 +234,7 @@ The home page should look like this
 2. Quizzes in the top section should route to the quiz.view state and pass in their name on the quizName state param
 
 
-#### 
+####
 
 A link to a sub-route is done using ui-sref.  We then invoke the route we want to go to as though it was a function and pass in any stateParams it should know about.
 
@@ -204,10 +246,11 @@ Iterating over an object to get a key value pair:
 `ng-repeat="(key, value) in array"`
 
 
-#### 
+####
 
 The final code should look something like this.  Variable names can be different if you're calling things differently.
 
+__homeView.html__
 ```
 <div class="quizzes">
   <h1> Choose a quiz! </h1>
@@ -223,9 +266,10 @@ The final code should look something like this.  Variable names can be different
 </div>
 ```
 
+
 ### Home page done - recap
 
-#### 
+####
 We've finished our first route.  We set up our route, injected ui-router, and told it to use the homeView and homeController files for the home page.
 
 We then worked in those files to bind an array of quizzes to the ui.
@@ -233,50 +277,12 @@ We then worked in those files to bind an array of quizzes to the ui.
 
 ## Quiz Page
 
-### Setup Route
+### Mocking the Data
 
-#### 
-Set up a route to the quiz page using
-`/quiz/:quizName`, `quizCtrl`, `quizContainerView.html`
+####
 
-Inside of your controller display the quizName route param somewhere on your page
-
-Once you're done test your route by adding `#/quiz/angular` on the end of your url
-
-#### 
-In your app.js file you have a .state('home', ....) state set up.
-Mimic that and add a new state that has:
-- a state name of quiz
-- a url property equal to `/quiz/:quizName`
-- a templateUrl property equal to `components/quiz/views/quizContainerView.html`
-- a controller property equal to `QuizCtrl` (This needs to match your controller name in quizCtrl.js
-
-Inside of the quizCtrl you will need to inject `$stateParams` to get access to the `quizName` parameter we asked for in our url
-
-#### 
-Route config code
-```
-.state('quiz', {
-    url: '/quiz/:quizName',
-    templateUrl: 'components/quiz/views/quizContainerView.html',
-    controller: 'QuizCtrl'
-})
-```
-
-Controller code
-```
-app.controller('QuizCtrl', function ($scope, $stateParams) {
-	$scope.quizName = $stateParams.quizName;
-```
-
-Once you have these pieces you can bind `{{quizName}}` in the `quizContainerView` to show the quizName
-
-### Setup controller and Getting Data
-
-#### 
-
-This is a sample Quiz that you can look at to get an idea of the data you're working with!!!
-This will be very important.  Copy this structure when setting up your mocks.
+This will be needed by future steps so let's get this set up now.  This is a sample Quiz that you can look at to get an idea of the data you're working with!!!
+This will be very important.  Copy this structure into your service at the top.
 
 ```
 var quizSampleObj = {
@@ -340,37 +346,109 @@ var quizSampleObj = {
 ```
 
 
+### Setup Route
+
+####
+Set up a route to the quiz page using
+`/quiz/:quizName`, `quizCtrl`, `quizContainerView.html`
+
+Inside of your controller display the quizName route param somewhere on your page
+
+Resolve a `questions` property that gets its data from `quizService.getQuestions(quizName)`
+
+Once you're done test your route by adding `#/quiz/angular` on the end of your url
+
+
+
+####
+In your app.js file you have a .state('home', ....) state set up.
+Mimic that and add a new state that has:
+- a state name of quiz
+- a url property equal to `/quiz/:quizName`
+- a templateUrl property equal to `components/quiz/views/quizContainerView.html`
+- a controller property equal to `QuizCtrl` (This needs to match your controller name in quizCtrl.js
+
+Inside of the quizCtrl you will need to inject `$stateParams` to get access to the `quizName` parameter we asked for in our url
+
+Inside of quizService add a getQuestions function that returns a promise.  It takes in a quizName.  For now just ignore the parameter and return the same empty list of questions.
+
+####
+Route config code
+__app.js__
+```
+.state('quiz', {
+    url: '/quiz/:quizName',
+    templateUrl: 'components/quiz/views/quizContainerView.html',
+    controller: 'quizCtrl',
+    resolve: {
+      questions: function (quizService, $stateParams) {
+        var name = $stateParams.quizName
+        return quizService.getQuestions(name);
+      }
+    }
+})
+```
+
+__quizCtrl.js__
+```
+app.controller('quizCtrl', function ($scope, $stateParams, questions) {
+	$scope.quizName = $stateParams.quizName;
+  $scope.questions = questions;
+```
+
+__quizService.js__
+```
+this.getQuestions = function(quizName){
+    var defer = $q.defer();
+
+    defer.resolve(quizSampleObj.angular.questions)
+
+    return defer.promise;
+}
+```
+
+Once you have these pieces you can bind `{{quizName}}` in the `quizContainerView` to show the quizName
+
+
+### Setup controller and Getting Data
+
+####
+
 _Your controller needs to accept:_
  the `quizService`, `$scope`, `$stateParams`, and a dependency called `questions`
 
 _Your controller needs to handle the following to start with:_
-We need to track our questions that we want to answer.
-We need to track our answers
-We need to know which question is the 'current' one that we're looking at.
-We need to be able to change the current answer.
-We need to be able to reset our answers so we can start over.
+* We need to track our questions that we want to answer.
+* We need to track our answers
+* We need to save an answer and move to the next question
+* We need to know which question is the 'current' one that we're looking at.
+* We need to be able to change the current answer.
+* We need to be able to reset our answers so we can start over.
 
 
-#### 
+####
 
 _Your controller needs the following properties on it's scope:_
-questions - array of `questions`.  These will be passed in as a dependency 
-answers - an empty object to start with
-currentQuestion - index 0 of the questions array
+* questions - array of `questions`.  These will be passed in as a dependency
+* answers - an empty object to start with - This is the users answers
+* results - an empty object to start with - This is the results once we check those answers.
+* currentQuestion - index 0 of the questions array
 
 _Your controller needs to have the following functions to start with:_
-`nextQuestion` - Sets the $scope.currentQuestion to the next question if there is one
-`setCurrentQuestion` - Sets the $scope.currentQuestion to a passed in function 
-`checkMyAnswers` - calls a `checkMyAnswers` function on the service and passes in our questions and our answers.  This will return a promise.
-`reset` - sets the answers array to a new empty object and resets the current question to the first question in the questions array
+* `nextQuestion` - Sets the $scope.currentQuestion to the next question if there is one
+* `setCurrentQuestion` - Sets the $scope.currentQuestion to a passed in question
+* `checkMyAnswers` - calls a `checkMyAnswers` function on the service and passes in our questions and our answers.  This will receive a promise from the service.  It then sets $scope.results equal to the response of the promise.
+* `reset` - sets the answers array to a new empty object and resets the current question to the first question in the questions array
+* `saveAnswer` - Adds an answer to the answers object and moves to the next question.  If it's the last question it checks for correctness.
 
-#### 
+####
 
 ```
 app.controller('QuizCtrl', function ($scope, questions, quizService, $stateParams) {
 
 	$scope.questions = questions;
 	$scope.answers = {};
+  $scope.results = {};
 	$scope.currentQuestion = $scope.questions[0];
 
 	$scope.setCurrentQuestion = function (question) {
@@ -392,17 +470,28 @@ app.controller('QuizCtrl', function ($scope, questions, quizService, $stateParam
 		});
 	}
 
+  $scope.saveAnswer = function (id, answer) {
+    $scope.answers[id] = answer;
+    $scope.nextQuestion();
+
+    if ($scope.results.done) {
+      //we've already hit 'check answers' so update the answer results
+      $scope.checkMyAnswers();
+    }
+  };
+
 	$scope.reset = function () {
 		$scope.answers = {};
 		$scope.currentQuestion = $scope.questions[0]
 	}
+});
 
 ```
 
 
 ### Setup View Container
 
-#### 
+####
 
 Our view is going to look something like this
 
@@ -414,22 +503,24 @@ Setup a skeleton that looks like this (Don't worry about the data for now, just 
 
 Use nested UI-views to do this
 
-#### 
+####
 
-We're going to use nested UI-views to separate our content. 
+We're going to use nested UI-views to separate our content.
 For the div on the left add a ui-view attribute with a value of list.
 For the div on the right add a ui-view attribute with a value of detail
 
 We then need to go add a new sub-route in our config.
-Add a new state for `quiz.view`
-It has a parent of `quiz`
-I has a property called `views` that is an object
-Our views object has two properties `'list'` and `'detail'`
-Each are an object with a property `templateUrl` pointing to `questionListWrapperView.html` and `questionDetailView.html` respectively
+- Add a new state for `quiz.view`
+- It has a parent of `quiz`
+- It has a property called `views` that is an object
+- Our views object has two properties `'list'` and `'detail'`
+- Each are an object with a property `templateUrl` pointing to `questionListWrapperView.html` and `questionDetailView.html` respectively
 
-#### 
+To get the next views to fire correctly we need to give Ui-router some logic to select the correct template.  This is probably new so find the code below
 
-quizContainerView
+####
+
+__quizContainerView__
 ```
 <div class="quizContainer">
 	<div class="list" ui-view="list"></div>
@@ -441,7 +532,7 @@ quizContainerView
 </div>
 ```
 
-app.js - state for nested views
+__app.js - state for nested views__
 ```
 .state('quiz.view', {
     parent: 'quiz',
@@ -456,24 +547,37 @@ app.js - state for nested views
 })
 ```
 
+__app.js - inbetween the module and the .config__
+```
+.run(function ($rootScope, $state) {        
+       $rootScope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams) {
+           if(toState.name === 'quiz') {
+               event.preventDefault();
+               $state.go('quiz.view', toParams)
+           }
+       })
+   })
+```
+
 ### Setup Question List
 
-#### 
+####
+
 Our routes should be set up to hold our question list on the left in questionListWrapperView.html.  Open that and set it up so it looks like the screenshot above.  You'll want all the same buttons and wire it up to the controller.
 
 CheckAnswers and Reset should be made to work
 
-#### 
+####
 
 We nested views, but we did not nest controllers, so we can bind to the parent controller we've already set up (quizCtrl)
 
 The CheckAnswers button will use the checkAnswers function on your controller
 The Rest button will use the reset function on your controller
 The question list will be bound to our questions array.
-It needs to watch the currentQuestion to determine when to bold an item 
+It needs to watch the currentQuestion to determine when to bold an item
 
 
-#### 
+####
 
 ```
 questionListWrapperView.html
@@ -503,8 +607,8 @@ questionListWrapperView.html
 
 ### Setup current Question
 
-#### 
-Our routes should be set up to hold our current question on the right in questionDetailView.html.  Open that and set it up so it looks like the screenshot above.  There are two question types `multiple` and `blank`. 
+####
+Our routes should be set up to hold our current question on the right in questionDetailView.html.  Open that and set it up so it looks like the screenshot above.  There are two question types `multiple` and `blank`.
 
 We will change how we show the current question based on it's `qType`.
 
@@ -515,54 +619,49 @@ Try and get two layouts† that look like this:
 
 <img src="http://i.imgur.com/DTmXH15.png" width="100%" height="100%"></img>
 
-#### 
+####
 Look back on your code from last week and remember how to do this.  This should be nothing new.
 
-#### 
+####
+__questionDetailView.html__
 ```
-Multiple choice 
-
 <div>
-	<div ng-if="question">
-		<h2> {{question.title}} </h2>
-		<div>
-			<div ng-repeat="choice in question.choices">
-				<input ng-checked="answers[question.id] === choice" ng-click="update(choice)" name="answer" type="radio"> {{ choice }}
-				<br>
-			</div>
-		</div>
-		<br />
-		<button class="saveBtn" ng-click="saveAnswer(selected)"> Save and Continue </button>
-	</div>
+  <div ng-if="currentQuestion.qtype === 'multiple'">
+    <h2> {{currentQuestion.title}} </h2>
+    <div>
+      <div ng-repeat="choice in currentQuestion.choices">
+        <input ng-checked="answers[currentQuestion.id] === choice" ng-click="update(choice)" name="answer" type="radio"> {{ choice }}
+        <br>
+      </div>
+    </div>
+    <br />
+    <button class="saveBtn" ng-click="saveAnswer(selected)"> Save and Continue </button>
+  </div>
+  <div ng-if="currentQuestion.qtype === 'blank'">
+    <h2> {{currentQuestion.title}} </h2>
+    <br />
+    <input type="text" placeholder="Your answer here" ng-model="answer" ng-keyup="handleEnter($event, answer)"/>
+    <br />
+    <button class="saveBtn" ng-click="saveAnswer(answer)"> Save and Continue </button>
+  </div>
 </div>
-```
+
 
 ```
-fill in the blank
-
-<div>
-	<div ng-if="question">
-		<h2> {{formattedQuestion}} </h2>
-
-		<br />
-		<input type="text" placeholder="Your answer here" ng-model="answer" ng-keyup="handleEnter($event, answer)"/>
-		<br />
-		<button class="saveBtn" ng-click="saveAnswer(answer)"> Save and Continue </button>
-	</div>
-</div>
-```
+TODO : Change handleEnter to ng-submit
+      - This is working off of 1 controller at this point, no isolate scope.  Need to add 'temporary instructions' section to get a working controller.
 
 ### Mocking data in the Service
 
-#### 
-Your service needs to mock the ability to 
+####
+Your service needs to mock the ability to
 * getQuizNames - This will turn an array of quiz names.
 * getQuestions - given a quizName it can get all questions for that quiz
 * checkAnswers - This is not a mock, but given an array of questions and an object of answers it can check if the answer is the correct answer
 
 Each of these will later be swapped to get data from the internet. Create your own promise in each function to return and resolve.
 
-#### 
+####
 The structure of each question will be in the same structure as what is in `quizSampleObject.js` .  
 * QuizNames are the names of the top level properties on our quizSampleObject.
 * getQuestions will return an array of questions - see `quizSampleObject.js` for example
@@ -572,22 +671,24 @@ The structure of each question will be in the same structure as what is in `quiz
         * Multiple choice questions need to look inside of question.choices to see if that choice is correct to compare against the answer
         * fill in the blank questions just have a correct property can can be compared against the answer string.
     * Create a results object that tracks each answer by question id. Use the value of true if its correct.
-    
-#### 
+
+####
 
 TODO - Make code sample for this - the solution is completed and not mocked.
 
 
 ### Wire it all together
 
-#### 
+####
 Your save and continue button should store your answer and proceed to the next question.
 
 Reset should clear out answer and allow you to proceed.
 
-You have mock data you can put in your service to test your code.
+quizService should compare the answers given with the actual correct answer.  
+Try this as a logic/though puzzle before peeking at the solution code for the answer.
 
-#### 
+
+####
 Nope, no further hints.  Give it a solid try before peeking at the solution code or grabbing a mentor.
 
 
@@ -595,7 +696,7 @@ Nope, no further hints.  Give it a solid try before peeking at the solution code
 
 ### Move the view into a template
 
-#### 
+####
 The first thing we want to do is move some code around.
 
 In the quiz folder, create a new folder called `partials`.  
@@ -609,7 +710,7 @@ move it out of that file into the the new partial view we created.
 
 If you test it now it should work exactly as it did before.  We didn't change anything, but we did move some things.  This will come in handy because we're going to re-use this question list on another screen once we can save our results.
 
-#### 
+####
 
 __More in-depth__
 My directive is called `question-list` inside of `questionListDirective.js` and it returns an object with a single property : `templateUrl` with a value pointing to the `quizListView.html`.
@@ -618,7 +719,7 @@ That quiz list view has the ng-repeat block that used to be found in the quizLis
 
 My quiz list wrapper has some buttons to check answers, reset, etc and a directive to handle the actual list of questions.
 
-#### 
+####
 ```
 quizListWrapperView.html
 
@@ -666,7 +767,7 @@ app.directive('questionList', function () {
 
 ### Setup the isolate scope
 
-#### 
+####
 
 Setup an isolate scope in our question list directive that has the following properties:
 * questions
@@ -680,7 +781,7 @@ Pass in the matching values from the controller
 
 If you ensure the property names on the controller match the ones you use here you won't have to change the template file.  If you want to see the separation, change the property names in various places and find the corresponding place to change to get it working again.
 
-#### 
+####
 __isolate scope__
 We create an isolate scope by adding a scope property on the object we are returning in our directive (right next to templateUrl).  The value of this property is an object.  For keys we list the properties we are going to want to add to our scope.  For values on those properties we tell the directive how to treat that property.
 
@@ -710,10 +811,10 @@ Lets say I wanted to re-use this question-list using a different person.  All I 
 
 Follow the same patterns and setup the question list with the attributes listed above.
 
-You should now have a directive that can use any set of questions and report the answers back to any array while tracking their currentQuestion separately. 
+You should now have a directive that can use any set of questions and report the answers back to any array while tracking their currentQuestion separately.
 
 
-#### 
+####
 ```
 questionListDirective.js
 
@@ -739,7 +840,7 @@ app.directive('questionList', function () {
 
 ### Create the template
 
-#### 
+####
 Create a file called `multipleChoiceTmpl.html` and move your multiple choice html code inside it (from questionDetailView).
 
 Create a directive file called `multipleChoiceDirective.js` and setup a directive using the above file as its templateUrl.
@@ -748,10 +849,10 @@ Go back into questionDetailView and add your multipleChoiceDirective into the ht
 
 Test it and ensure everything still works
 
-#### 
+####
 This should follow the same pattern as above for moving html code into a template.
 
-#### 
+####
 ```
 multipleChoiceTmpl.html
 
@@ -796,7 +897,7 @@ questionDetailView.html
 
 ### Isolate the scope
 
-#### 
+####
 Once again we want an isolate scope.  
 This scope is going to have the following properties:
 * question '='  - This is the current question
@@ -806,7 +907,7 @@ This scope is going to have the following properties:
 Pass the values in via the html.
 
 
-#### 
+####
 
 __Isolate scope__
 ```
@@ -822,7 +923,7 @@ This is going to be done in our questionDetailView.html on our `<multiple-choice
 
 You will need an attribute for every property on the isolate scope bound back to properties on our controller.  It is important to note that this directive is NOT inside our list.  But on the side of it using the same parent controller.  So that is where the bindings for our directive are coming from.
 
-#### 
+####
 ```
 multipleChoiceDirective.js
 
@@ -853,11 +954,11 @@ id and answer (for saveAnswer) are going to be passed in from our directive code
 
 ### Restrict and Replace
 
-#### 
+####
 Add a property on our directive to restrict the directive to be usable as an attribute or an element.
 Add a property on our directive to specify that we want to replace whatever element we are applied to with our template.
 
-#### 
+####
 The valid values for the restrict property are:
 * 'A'   for attribute
 * 'E'   for element
@@ -869,7 +970,7 @@ The valid values for replace are:
 
 Both of these properties are added the object that a directive returns (at the same level as templateUrl).
 
-#### 
+####
 
 ```
 restrict: 'AE',
@@ -878,13 +979,13 @@ replace: true,
 
 ### Controller
 
-#### 
+####
 We need our controller to be able to do 3 things:
 * watch for the question to change and blank out selected when it does
 * update the currently selected answer with a passed in choice
 * save our answer back to the controller
 
-#### 
+####
 __$watch__
 $watch is a utility method on scope that can tell us when a certain property changes.  If I:
 `$scope.$watch('cheese', function(){`
@@ -893,11 +994,11 @@ The function I pass it will be invoked every time my `$scope.cheese` property is
 In this case we want to watch the `question` property.
 Inside our function we want to set `$scope.selected` to be an empty string
 
-__update__ 
+__update__
 We want a `$scope.update` function that recieves a `choice` as a parameter.
 If choice is truthy
     set `$scope.selected` equal to choice
-    
+
 __saveAnswer__
 We want a `$scope.saveAnswer` function that receives a `selected` as a parameter
 
@@ -907,13 +1008,13 @@ It will invoke `$scope.save` and pass in an object:
     id: $scope.question.id,
     answer: selected
 }
-``` 
+```
 
 We are sending the controller's save method the id of the question we're saving an answer for, and what answer they should save for that question id.
 
 `$scope.save` comes from our isolate scope vai 2 way binding.  So this function is really a function that lives on our controller, we just have a pointer to it.
 
-#### 
+####
 ```
 multipleChoiceDirective.js
 
@@ -939,10 +1040,10 @@ app.directive('multipleChoice', function () {
 				}
 			}
 			$scope.saveAnswer = function(selected) {
-				
+
 				$scope.save({id: $scope.question.id, answer: selected});
 			}
-			
+
 		}
 
 
@@ -954,7 +1055,7 @@ app.directive('multipleChoice', function () {
 
 ### Follow all the same steps for the multipleChoiceDirective but naming things fillBlankDirective
 
-#### 
+####
 Differences :
 * Our template file needs to contain the fill in the blank html from questionDetailView instead of the multiple choice code
 * The file names are going to be `fillBlankDirective.js` and `fillBlankTmpl.html`
@@ -963,7 +1064,7 @@ Differences :
 
 ### The controller on the directive
 
-#### 
+####
 `$scope.saveAnswer` works the exact same as it does in the multiple choice directive.
 
 `$scope.handleEnter` needs to take in two parameters: e, answer
@@ -973,12 +1074,12 @@ If `e.keyCode` is 13  (That's the keycode for the enter key)
 `$scope.watch('question'` Needs to look in our answers object for the question.id we have on `$scope.question`.   If it exists then we know this question has been answered and we want to set `$scope.answer` equal to the answer from our answers.
     If it doesn't exist we want to set answer equal to an empty string.
 
-#### 
+####
 __answers__
 
 `$scope.answers` is an object.  Not an array.  But we don't know our question id at the time of writing the code.  So we need to access it dynamically using square bracket notation.
 
-#### 
+####
 ```
 fillBlankDirective.js
 
@@ -1034,7 +1135,7 @@ __Quiz Screen functionality__
 You see a list of questions on the left hand side
 You see the current question on the right half of the screen
 The correct directive is used based on the question type (multiple choice or fill in the blank)
-You can answer a question 
+You can answer a question
 You can click `CheckAnswers` button and it will mark a question as correct or incorrect.
 You can click reset and it will blank out all answers.
 You can click home and it will go back to the home screen.
@@ -1043,19 +1144,19 @@ You can click home and it will go back to the home screen.
 
 ### Note
 
-#### 
+####
 For this step we are going to replace existing functions in our service.  Be sure to remove the old mock functionality.
 
 ### Create a new firebase app
 
-#### 
+####
 Go to firebase and create a new app.  Copy out your app url.
 
 ### Upload to your own firebase
 
 Open uploadQuiz.js and paste in the url you just copied.
 
-Open the terminal/command line where you are at. 
+Open the terminal/command line where you are at.
 
 Type `node uploadQuiz.js`  (You will need to install nodejs if you haven't yet)
 
@@ -1080,13 +1181,13 @@ Test your imports by checking the console in the browser for no errors.
 
 ### Set up the firebase refs
 
-#### 
+####
 Setup your firebase Url on a var.
 Create a firebase ref to `quizzes`, a $firebaseObject using that ref.
 
 Create another firebase ref to `answers` and pass that ref into a $firebasearray.  
 
-#### 
+####
 Creating a firebase ref looks like this:
 `var newRef = new Firebase(urlGoesHere);`
 
@@ -1095,7 +1196,7 @@ Creating a $firebase object looks like this
 
 This is creating an angular fire link for us so that we have a two way connction between our firebase server and our code.  By changing the url we pass in when we make the ref we can focus on specific parts of our firebase structure.
 
-#### 
+####
 Code
 ```
 var firebaseUrl = 'https://quiz-sample.firebaseIO.com'
@@ -1108,13 +1209,13 @@ var pastQuizArray = $firebaseArray(answers);
 
 ### Get available quiz names
 
-#### 
+####
 Use our new firebase references to get a list of names of all available quizzes and send them back to the controller in the resolve function of our promise.
 
 Warning: On a firebase object you will get back extra properties.  You'll need to filter these out.
 Warning 2: Firebase throws an error if there is a problem.  Use a `.catch` on the promise as well
 
-#### 
+####
 __Knowing when we have data__
 The primary hook we have into getting our firebase data is the $loaded function.
 It is invoked on an firebase object or array and returns a promise.  
@@ -1134,7 +1235,7 @@ We can used two criteria to know if it's one of our properties.
 * our object `hasOwnProperty`
 * the first character is not a `$`
 
-#### 
+####
 __ Code __
 ```
 var getNames = function (list) {
@@ -1163,18 +1264,18 @@ this.getQuizNames = function () {
 
 ### Get questions
 
-#### 
+####
 The previous step only got us quiz names. We need the actual questions.
 This is going to work identically to the step above except:
 * We don't have to parse out the quiz name.
 * The quiz name will be passed in as a parameter
 * We can use the quiz name to get to the exact quiz we want and then get the `.questions` out.
 
-#### 
+####
 __Hint code__
 `var thingIWant = targetFirebaseObj[propertyKey].thingIWant`
 
-#### 
+####
 __Code__
 ```
 this.getQuestions = function (name) {
@@ -1192,17 +1293,17 @@ this.getQuestions = function (name) {
 
 ### Test questions appear in quiz
 
-#### 
+####
 If you set up your mock using promises the first time then the rest of your code should just work.
 Test it and make sure you can open a quiz, see the quiz questions, and take the quiz.
 
 ### save answers
 
-#### 
+####
 Now that we have a database we want to save our answers.
 
 In our service, create a new function called `saveMyAnswers`.
-It takes in: 
+It takes in:
 * answers - an array of answers
 * quiz - The category of the quiz IE - Angular, HTML.  This is the same value as the key from our quizzesObj
 * quizDate - The dateTime this quiz was taken (now)
@@ -1213,7 +1314,7 @@ It creates a new firebaseRef using the first 3 parameters above in this format
 
 It saves/sets the data and then resolves the promise with 'answers saved'
 
-#### 
+####
 __Pseudo Code__
 ```
 var dfd = defer()
@@ -1228,7 +1329,7 @@ resolve('...')
 return dfd.promise
 ```
 
-#### 
+####
 __Actual Code__
 ```
 var dfd = $q.defer();
@@ -1245,7 +1346,7 @@ return dfd.promise;
 ## BD) Instant gratification
 ### When taking a quiz get instant results after answering a questions
 
-#### 
+####
 You will need to do the following to finish this black diamond.
 
 1) Make it so that when this checkbox is checked all question answers and graded instantly with results shown in the question list.
@@ -1254,7 +1355,7 @@ You will need to do the following to finish this black diamond.
 ## BD) History
 ### Get the saved questions and show them on the history page
 
-#### 
+####
 You will need to do the following to finish this black diamond.
 
 1) The home page will list the nicknames/dates of all answers that have been saved
