@@ -5,8 +5,8 @@ angular.module('quizApp').controller('quizCtrl', function ($scope, quizService, 
     $scope.currentQuestion = $scope.questions[0];
     $scope.results = {};
 
-   	$scope.saveAnswer = function (answer) {
-        $scope.answers[$scope.currentQuestion.id] = answer;
+   	$scope.saveAnswer = function (id, answer) {
+        $scope.answers[id] = answer;
         $scope.nextQuestion();
 
         if ($scope.results.done) {
@@ -18,17 +18,7 @@ angular.module('quizApp').controller('quizCtrl', function ($scope, quizService, 
     $scope.setCurrentQuestion = function (question) {
         $scope.currentQuestion = question;
     }
-
-    $scope.handleEnter = function (ev, answer) {
-        if (ev.keyCode === 13) {
-            $scope.saveAnswer(answer);
-        }
-    }
-
-    $scope.update = function (choice) {
-        $scope.selected = choice;
-    }
-
+    
     $scope.nextQuestion = function () {
         var idx = $scope.questions.indexOf($scope.currentQuestion);
         if ($scope.questions[idx + 1]) {
