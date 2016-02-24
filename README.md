@@ -1206,6 +1206,10 @@ You can click `CheckAnswers` button and it will mark a question as correct or in
 You can click reset and it will blank out all answers.
 You can click home and it will go back to the home screen.
 
+####
+
+Day 2 solution : https://github.com/DevMountain/quiz/tree/day2Solution
+
 ## D3) Using firebase in our service
 
 ### Note
