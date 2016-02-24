@@ -10,7 +10,7 @@ app.directive('multipleChoice', function () {
 		restrict: 'AE',
 		replace: true,
 		templateUrl: 'components/quiz/partials/multipleChoiceTmpl.html',
-		controller: function ($scope, $attrs) {
+		controller: function ($scope) {
 			$scope.$watch('question', function () {
 				$scope.selected = '';
 			});
@@ -20,12 +20,8 @@ app.directive('multipleChoice', function () {
 				}
 			};
 			$scope.saveAnswer = function(selected) {
-
 				$scope.save({id: $scope.question.id, answer: selected});
 			};
-
 		}
-
-
 	};
 });
