@@ -2,11 +2,11 @@ var app = angular.module('quizApp');
 
 app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {
 
-	var firebaseUrl = 'https://quiz-sample.firebaseIO.com'
+	var firebaseUrl = 'https://quiz-sample.firebaseIO.com';
 
 	var quizzes = new Firebase(firebaseUrl + '/quizzes');
 	var quizzesObj = $firebaseObject(quizzes);
-	var answers = new Firebase(firebaseUrl + '/answers')
+	var answers = new Firebase(firebaseUrl + '/answers');
 	var pastQuizArray = $firebaseArray(answers);
 
 
@@ -18,7 +18,7 @@ app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {
 			}
 		}
 		return names;
-	}
+	};
 
 	this.getQuizNames = function () {
 		var dfd = $q.defer();
@@ -29,9 +29,9 @@ app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {
 		})
 			.catch(function (err) {
 				dfd.reject(err);
-			})
+			});
 		return dfd.promise;
-	}
+	};
 
 	this.getPastQuizzes = function () {
 		var dfd = $q.defer();
@@ -42,31 +42,31 @@ app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {
 			dfd.resolve(pastQuizArray);
 		})
 			.catch(function (err) {
-				dfd.reject(err)
-			})
+				dfd.reject(err);
+			});
 
 		return dfd.promise;
-	}
+	};
 
 	this.getAnswers = function (quizName, quiz) {
-		console.log(quizName, quiz)
+		console.log(quizName, quiz);
 		var dfd = $q.defer();
 
 		var quizAnswersRef = new Firebase(firebaseUrl + '/answers/' + quizName + '/' + quiz);
-		var quizAnswers = $firebaseObject(quizAnswersRef)
+		var quizAnswers = $firebaseObject(quizAnswersRef);
 		quizAnswers.$loaded()
 			.then(function () {
-				console.log(quizAnswers)
+				console.log(quizAnswers);
 				var answers = quizAnswers.answers;
 				console.log(answers);
 				dfd.resolve(answers);
 			})
 			.catch(function (err) {
 				dfd.reject(err);
-			})
+			});
 
 		return dfd.promise;
-	}
+	};
 
 	this.getQuestions = function (name) {
 		var dfd = $q.defer();
@@ -75,22 +75,22 @@ app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {
 			dfd.resolve(questions);
 		})
 		.catch(function (err) {
-				dfd.reject(err)
-			})
+				dfd.reject(err);
+			});
 		return dfd.promise;
-	}
+	};
 
 	this.saveMyAnswers = function (answers, quiz, quizDate, quizNickName) {
 		var dfd = $q.defer();
 		var myAnswers = new Firebase(firebaseUrl + '/answers/' + quiz + '/' + quizDate + '/answers');
 		if (quizNickName) {
-			myAnswers.parent().set({name: quizNickName})
+			myAnswers.parent().set({name: quizNickName});
 		}
 		myAnswers.set(answers);
 		dfd.resolve('answers saved');
 
 		return dfd.promise;
-	}
+	};
 
 	this.checkMyAnswers = function (questions, answers) {
 		var dfd = $q.defer();
@@ -98,12 +98,12 @@ app.service('quizService', function ($q, $firebaseObject, $firebaseArray) {
 			done: true
 		};
 		for (var i = 0; i < questions.length; i++) {
-			var isCorrect = questions[i].qtype === 'multiple' ? questions[i].choices[questions[i].correct] === answers[questions[i].id] : (questions[i].qtype === 'blank' ? questions[i].correct === answers[questions[i].id] : false)
+			var isCorrect = questions[i].qtype === 'multiple' ? questions[i].choices[questions[i].correct] === answers[questions[i].id] : (questions[i].qtype === 'blank' ? questions[i].correct === answers[questions[i].id] : false);
 			results[questions[i].id] = isCorrect;
 		}
 		dfd.resolve(results);
 
 		return dfd.promise;
-	}
+	};
 
-})
+});

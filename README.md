@@ -701,6 +701,11 @@ Try this as a logic/though puzzle before peeking at the solution code for the an
 
 
 ####
+
+Solution for day 1 : https://github.com/DevMountain/quiz/tree/day1Solution
+
+
+####
 Nope, no further hints.  Give it a solid try before peeking at the solution code or grabbing a mentor.
 
 
