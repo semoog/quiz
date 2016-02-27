@@ -260,7 +260,7 @@ __homeView.html__
   <h1> Choose a quiz! </h1>
 <!--  <hr>-->
   <div ng-repeat="item in quizzes">
-    <a ui-sref="quiz.view({quizName: item.name})"> {{item.displayName}}</a>
+    <a ui-sref="quiz.view({quizName: item.name})"> {{item.name}}</a>
   </div>
 </div>
 
