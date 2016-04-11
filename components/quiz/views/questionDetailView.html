@@ -1,0 +1,20 @@
+<div>
+  <div ng-if="currentQuestion.qtype === 'multiple'">
+    <h2> {{currentQuestion.title}} </h2>
+    <div>
+      <div ng-repeat="choice in currentQuestion.choices">
+        <input ng-checked="answers[currentQuestion.id] === choice" ng-click="update(choice)" name="answer" type="radio"> {{ choice }}
+        <br>
+      </div>
+    </div>
+    <br />
+    <button class="saveBtn" ng-click="saveAnswer(selected)"> Save and Continue </button>
+  </div>
+  <div ng-if="currentQuestion.qtype === 'blank'">
+    <h2> {{currentQuestion.title}} </h2>
+    <br />
+    <input type="text" placeholder="Your answer here" ng-model="answer" ng-keyup="handleEnter($event, answer)"/>
+    <br />
+    <button class="saveBtn" ng-click="saveAnswer(answer)"> Save and Continue </button>
+  </div>
+</div>
